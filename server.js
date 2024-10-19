@@ -112,7 +112,12 @@ async function handler(request) {
 
       console.log("///// received event id /////",receivedEvent.data.object.id)
       console.log("///// received event type /////",receivedEvent?.type)
-      // await updateInvoiceStatus(receivedEvent.data.object.id, receivedEvent?.type);
+
+      try {
+        await updateInvoiceStatus(receivedEvent?.data.object.id, receivedEvent?.type);  
+      } catch (error) {
+        console.error("///// error updating invoice status /////",error)
+      }
     }
 
 
