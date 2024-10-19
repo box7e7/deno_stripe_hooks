@@ -26,41 +26,36 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
   },
 });
 
-const channels = supabase.channel('custom-update-channel')
-  .on(
-    'postgres_changes',
-    { event: 'UPDATE', schema: 'public', table: 'roadside' },
-    (payload) => {
-      console.log('Change received!', payload);
-    }
-  )
-  .subscribe();
 
-const channels_1 = supabase.channel('custom-insert-channel')
-  .on(
-    'postgres_changes',
-    { event: 'INSERT', schema: 'public', table: 'roadside' },
-    (payload) => {
-      console.log('Change received!', payload);
-    }
-  )
-  .subscribe();
-
-// Fetch the first row from the 'roadside' table
-async function getFirstRow() {
+async function updateInvoiceStatus(stripeInvoiceId, newStatus) {
+  // First, select the row based on stripeInvoiceId
   const { data, error } = await supabase
-    .from('roadside')
-    .select('*') // Select all columns
-    .limit(2);   // Limit the result to 2 rows
+    .from('invoices')  // Replace with your actual table name
+    .select('*')
+    .eq('stripeInvoiceId', stripeInvoiceId)
+    .single();  // .single() assumes there will be only one matching row
 
   if (error) {
-    console.error('Error fetching data:', error);
-  } else {
-    console.log('First row:', data);
+    console.error('Error fetching invoice:', error);
+    return;
+  }
+
+  if (data) {
+    // Now, update the stripeInvoiceStatus field for the selected row
+    const { error: updateError } = await supabase
+      .from('invoices')  // Replace with your actual table name
+      .update({ stripeInvoiceStatus: newStatus })
+      .eq('stripeInvoiceId', stripeInvoiceId);
+
+    if (updateError) {
+      console.error('Error updating invoice status:', updateError);
+    } else {
+      console.log('Invoice status updated successfully!');
+    }
   }
 }
 
-getFirstRow();
+
 
 
 // ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -111,7 +106,16 @@ async function handler(request) {
       receivedEvent.id,
       requestOptions
     );
-  console.log("///// received event /////",receivedEvent)
+    // console.log("///// received event /////",receivedEvent)
+
+    if (receivedEvent?.data?.object?.object === "invoiceitem" || receivedEvent?.data?.object?.object === "invoice") {
+
+      console.log("///// received event id /////",receivedEvent.data.object.id)
+      console.log("///// received event type /////",receivedEvent?.type)
+      // await updateInvoiceStatus(receivedEvent.data.object.id, receivedEvent?.type);
+    }
+
+
   } catch (err) {
     return new Response(err.message, { status: 400 });
   }
