@@ -113,13 +113,18 @@ async function handler(request) {
       console.log("///// received event id /////",receivedEvent.data.object.id)
       console.log("///// received event type /////",receivedEvent?.type)
 
-      try {
-        await updateInvoiceStatus(receivedEvent?.data.object.id, receivedEvent?.type);  
-      } catch (error) {
-        console.error("///// error updating invoice status /////",error)
-      }
-    }
 
+      if(receivedEvent?.type==="invoice.payment_succeeded" || receivedEvent?.type==="invoice.paid"){
+
+        try {
+          await updateInvoiceStatus(receivedEvent?.data.object.id, "invoice.paid");  
+        } catch (error) {
+          console.error("///// error updating invoice status /////",error)
+        }
+        
+      }
+    
+    }
 
   } catch (err) {
     return new Response(err.message, { status: 400 });
