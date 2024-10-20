@@ -123,6 +123,18 @@ async function handler(request) {
         }
         
       }
+
+      if(receivedEvent?.type==="invoice.finalized"){
+
+        try {
+          // Wait for 3 seconds before updating the invoice status
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          await updateInvoiceStatus(receivedEvent?.data.object.id, "invoice.finalized");  
+        } catch (error) {
+          console.error("///// error updating invoice status /////",error)
+        }
+        
+      }
     
     }
 
